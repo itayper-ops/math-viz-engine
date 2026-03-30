@@ -71,7 +71,7 @@ Then open the frontend in your browser (or run it using a local server depending
 
 ---
 
-## Project Structure
+
 
 ## Project Structure
 
@@ -86,8 +86,9 @@ math-viz-engine/
 ├── README.md
 ├── LICENSE
 └── .gitignore
-
+```
 ---
+
 
 ## Examples
 
