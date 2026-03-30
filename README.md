@@ -1,4 +1,4 @@
-# math-viz-engine
+# math-vis-engine
 ![App Preview](screenshots/main-screen.png)
 
 
@@ -47,8 +47,8 @@ The goal is to help solve linear algebra problems while also demonstrating the b
 Clone the repository:
 
 ```bash
-git clone https://github.com/itayper-ops/math-viz-engine.git
-cd math-viz-engine
+git clone https://github.com/itayper-ops/math-vis-engine.git
+cd math-vis-engine
 ```
 
 Install dependencies:
@@ -76,7 +76,7 @@ Then open the frontend in your browser (or run it using a local server depending
 ## Project Structure
 
 ```text
-math-viz-engine/
+math-vis-engine/
 ├── backend/              # FastAPI backend and mathematical logic
 ├── frontend/             # Frontend interface
 ├── screenshots/          # README images and demo screenshots
