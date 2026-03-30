@@ -1,0 +1,2205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>math.vis</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg0:#060e1a;
+  --bg1:#0a1628;
+  --bg2:#0d2137;
+  --bg3:#112844;
+  --teal:#4a9ebb;
+  --teal2:#7ec8e3;
+  --teal3:#b0dff0;
+  --steel:#2a5f7a;
+  --glow:rgba(74,158,187,0.25);
+  --glow2:rgba(126,200,227,0.15);
+  --text:#e8f4f8;
+  --text2:#8db8cc;
+  --text3:#4a7a8a;
+  --border:rgba(74,158,187,0.2);
+  --border2:rgba(74,158,187,0.4);
+  --radius:6px;
+  --font-display:'Rajdhani',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg0);}
+
+body{
+  font-family:var(--font-display);
+  color:var(--text);
+  position:relative;
+}
+
+/* ── Background grid ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(74,158,187,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74,158,187,0.04) 1px, transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ── Screen system ── */
+.screen{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:1;
+  transition:opacity 0.4s ease, transform 0.4s ease;
+}
+.screen.hidden{opacity:0;pointer-events:none;transform:translateY(20px);}
+.screen.slide-left{opacity:0;pointer-events:none;transform:translateX(-40px);}
+.screen.slide-right{opacity:0;pointer-events:none;transform:translateX(40px);}
+
+/* ── Corner status ── */
+.corner-status{
+  position:fixed;top:20px;right:24px;
+  display:flex;align-items:center;gap:8px;
+  z-index:100;
+}
+.status-dot{width:6px;height:6px;border-radius:50%;background:#2ecc71;animation:pulse 2s ease-in-out infinite;}
+.status-txt{font-family:var(--font-mono);font-size:11px;color:var(--text3);}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(46,204,113,0.4)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(46,204,113,0)}}
+
+/* ── Back button ── */
+.back-btn{
+  position:fixed;top:20px;left:24px;
+  display:flex;align-items:center;gap:8px;
+  font-family:var(--font-mono);font-size:12px;color:var(--text3);
+  cursor:pointer;z-index:100;
+  padding:6px 12px;
+  border:1px solid var(--border);border-radius:var(--radius);
+  background:rgba(10,22,40,0.8);backdrop-filter:blur(8px);
+  transition:all 0.2s;opacity:0;pointer-events:none;
+}
+.back-btn.visible{opacity:1;pointer-events:all;}
+.back-btn:hover{color:var(--teal2);border-color:var(--border2);}
+
+/* ════════════════════════════════
+   MENU SCREEN
+════════════════════════════════ */
+#screen-menu{gap:0;}
+
+.menu-title{
+  font-family:var(--font-display);
+  font-size:clamp(48px,8vw,96px);
+  font-weight:700;
+  letter-spacing:0.15em;
+  color:transparent;
+  background:linear-gradient(135deg,var(--teal3) 0%,var(--teal) 50%,var(--steel) 100%);
+  -webkit-background-clip:text;background-clip:text;
+  text-transform:uppercase;
+  margin-bottom:8px;
+  animation:titleGlow 3s ease-in-out infinite alternate;
+}
+@keyframes titleGlow{
+  from{filter:drop-shadow(0 0 20px rgba(74,158,187,0.3));}
+  to{filter:drop-shadow(0 0 40px rgba(126,200,227,0.6));}
+}
+
+.menu-subtitle{
+  font-family:var(--font-mono);font-size:13px;
+  color:var(--text3);letter-spacing:0.3em;
+  text-transform:uppercase;margin-bottom:64px;
+}
+
+.menu-buttons{
+  display:flex;flex-direction:column;gap:12px;
+  width:320px;
+}
+
+.menu-btn{
+  position:relative;
+  display:flex;align-items:center;gap:16px;
+  padding:16px 24px;
+  background:rgba(13,33,55,0.8);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  cursor:pointer;
+  font-family:var(--font-display);
+  font-size:18px;font-weight:600;
+  letter-spacing:0.08em;
+  color:var(--text2);
+  text-transform:uppercase;
+  transition:all 0.25s;
+  overflow:hidden;
+  animation:fadeSlideUp 0.5s ease both;
+}
+.menu-btn:nth-child(1){animation-delay:0.1s;}
+.menu-btn:nth-child(2){animation-delay:0.2s;}
+.menu-btn:nth-child(3){animation-delay:0.3s;}
+.menu-btn:nth-child(4){animation-delay:0.4s;}
+
+@keyframes fadeSlideUp{
+  from{opacity:0;transform:translateY(16px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+.menu-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(74,158,187,0.08) 0%,transparent 100%);
+  opacity:0;transition:opacity 0.25s;
+}
+.menu-btn:hover{
+  color:var(--teal2);
+  border-color:var(--border2);
+  box-shadow:0 0 20px var(--glow),inset 0 0 20px rgba(74,158,187,0.05);
+  transform:translateX(4px);
+}
+.menu-btn:hover::before{opacity:1;}
+
+.menu-btn.exit-btn:hover{color:#e74c3c;border-color:rgba(231,76,60,0.4);box-shadow:0 0 20px rgba(231,76,60,0.2);}
+
+.btn-num{
+  font-family:var(--font-mono);font-size:12px;
+  color:var(--teal);opacity:0.7;
+  width:20px;flex-shrink:0;
+}
+
+.btn-line{
+  position:absolute;left:0;top:0;bottom:0;
+  width:2px;background:var(--teal);
+  transform:scaleY(0);transition:transform 0.25s;
+  transform-origin:center;
+  box-shadow:0 0 8px var(--teal);
+}
+.menu-btn:hover .btn-line{transform:scaleY(1);}
+
+/* ════════════════════════════════
+   CATEGORY SCREEN
+════════════════════════════════ */
+.cat-title{
+  font-family:var(--font-display);font-size:clamp(28px,4vw,48px);
+  font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--teal2);margin-bottom:8px;
+  text-shadow:0 0 30px rgba(126,200,227,0.4);
+}
+.cat-subtitle{font-family:var(--font-mono);font-size:11px;color:var(--text3);letter-spacing:0.3em;margin-bottom:48px;}
+
+.cat-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:12px;width:min(500px,90vw);
+}
+
+.cat-btn{
+  position:relative;
+  padding:20px 24px;
+  background:rgba(13,33,55,0.8);
+  border:1px solid var(--border);border-radius:var(--radius);
+  cursor:pointer;
+  text-align:left;overflow:hidden;
+  transition:all 0.25s;
+  animation:fadeSlideUp 0.4s ease both;
+}
+.cat-btn:nth-child(1){animation-delay:0.05s;}
+.cat-btn:nth-child(2){animation-delay:0.1s;}
+.cat-btn:nth-child(3){animation-delay:0.15s;}
+.cat-btn:nth-child(4){animation-delay:0.2s;}
+
+.cat-btn:hover{
+  border-color:var(--border2);
+  box-shadow:0 0 24px var(--glow);
+  transform:translateY(-2px);
+  background:rgba(17,40,68,0.9);
+}
+.cat-btn-num{font-family:var(--font-mono);font-size:10px;color:var(--teal);opacity:0.6;margin-bottom:6px;letter-spacing:0.2em;}
+.cat-btn-name{font-family:var(--font-display);font-size:16px;font-weight:600;letter-spacing:0.06em;color:var(--text);text-transform:uppercase;}
+.cat-btn-desc{font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-top:4px;line-height:1.4;}
+.cat-btn::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--teal),transparent);
+  transform:scaleX(0);transition:transform 0.3s;
+}
+.cat-btn:hover::after{transform:scaleX(1);}
+
+/* ════════════════════════════════
+   INPUT SCREEN
+════════════════════════════════ */
+#screen-input{
+  flex-direction:row;
+  align-items:stretch;
+  justify-content:stretch;
+  padding:60px 0 0;
+}
+
+.input-panel{
+  width:340px;flex-shrink:0;
+  background:rgba(10,22,40,0.95);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  height:100%;
+}
+
+.input-header{
+  padding:20px 24px 16px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+
+.input-op-name{
+  font-family:var(--font-display);font-size:20px;font-weight:700;
+  letter-spacing:0.1em;text-transform:uppercase;color:var(--teal2);
+  margin-bottom:4px;
+}
+.input-op-desc{font-family:var(--font-mono);font-size:10px;color:var(--text3);letter-spacing:0.1em;}
+
+.input-scroll{overflow-y:auto;flex:1;padding:20px 24px;}
+
+.field-label{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--text3);
+  margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;
+}
+
+.matrix-name-tag{font-family:var(--font-mono);font-size:14px;font-weight:500;color:var(--teal);margin-bottom:8px;}
+
+.mat-grid{display:grid;gap:3px;margin-bottom:4px;}
+.mat-cell{
+  font-family:var(--font-mono);font-size:13px;text-align:center;
+  padding:8px 4px;
+  background:rgba(13,33,55,0.8);
+  border:1px solid var(--border);border-radius:4px;
+  color:var(--text);width:100%;
+  transition:border-color 0.15s,background 0.15s,box-shadow 0.15s;
+}
+.mat-cell:focus{
+  outline:none;border-color:var(--teal);
+  background:rgba(74,158,187,0.08);
+  box-shadow:0 0 8px rgba(74,158,187,0.2);
+}
+.mat-cell::placeholder{color:var(--text3);}
+
+.size-controls{display:flex;align-items:center;gap:6px;margin-bottom:16px;}
+.size-lbl{font-family:var(--font-mono);font-size:10px;color:var(--text3);}
+.sz-btn{
+  width:22px;height:22px;
+  border:1px solid var(--border);border-radius:4px;
+  background:transparent;color:var(--text3);font-size:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all 0.15s;
+}
+.sz-btn:hover{border-color:var(--teal);color:var(--teal);}
+.sz-val{font-family:var(--font-mono);font-size:12px;color:var(--text);min-width:14px;text-align:center;}
+
+.txt-input{
+  width:100%;padding:10px 14px;
+  font-family:var(--font-mono);font-size:12px;
+  color:var(--text);background:rgba(13,33,55,0.8);
+  border:1px solid var(--border);border-radius:var(--radius);
+  transition:border-color 0.15s,box-shadow 0.15s;
+  resize:vertical;
+}
+.txt-input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 10px rgba(74,158,187,0.2);}
+.txt-input::placeholder{color:var(--text3);}
+
+.ai-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(74,158,187,0.08);border:1px solid rgba(74,158,187,0.2);
+  border-radius:4px;padding:5px 10px;
+  font-family:var(--font-mono);font-size:10px;color:var(--teal);
+  margin-bottom:12px;
+}
+
+.add-vec-btn{
+  width:100%;padding:8px;margin-top:4px;
+  background:transparent;border:1px dashed rgba(74,158,187,0.25);
+  border-radius:var(--radius);color:var(--text3);font-family:var(--font-mono);font-size:11px;
+  cursor:pointer;transition:all 0.15s;
+}
+.add-vec-btn:hover{border-color:var(--teal);color:var(--teal);}
+
+.remove-x{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 4px;transition:color 0.12s;}
+.remove-x:hover{color:#e74c3c;}
+
+.input-footer{padding:16px 24px;border-top:1px solid var(--border);flex-shrink:0;}
+
+.calc-btn{
+  width:100%;padding:12px;
+  background:linear-gradient(135deg,rgba(74,158,187,0.2),rgba(74,158,187,0.1));
+  border:1px solid var(--teal);border-radius:var(--radius);
+  color:var(--teal2);font-family:var(--font-display);font-size:16px;font-weight:700;
+  letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;
+  transition:all 0.25s;position:relative;overflow:hidden;
+}
+.calc-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(74,158,187,0.15),transparent);
+  opacity:0;transition:opacity 0.25s;
+}
+.calc-btn:hover{
+  background:linear-gradient(135deg,rgba(74,158,187,0.3),rgba(74,158,187,0.15));
+  box-shadow:0 0 20px rgba(74,158,187,0.3);
+  color:#fff;
+}
+.calc-btn:hover::before{opacity:1;}
+.calc-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.calc-btn-inner{display:flex;align-items:center;justify-content:center;gap:8px;}
+
+.spinner{
+  width:14px;height:14px;
+  border:2px solid rgba(74,158,187,0.3);border-top-color:var(--teal2);
+  border-radius:50%;animation:spin 0.6s linear infinite;display:none;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Result panel */
+.result-panel{
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+  background:rgba(6,14,26,0.9);
+}
+
+.result-header{
+  padding:20px 28px 16px;border-bottom:1px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.result-title{font-family:var(--font-display);font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--text3);}
+
+.result-scroll{flex:1;overflow-y:auto;padding:24px 28px;}
+
+.result-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;gap:16px;opacity:0.3;
+}
+.result-empty-icon{font-size:48px;filter:grayscale(1);}
+.result-empty-txt{font-family:var(--font-mono);font-size:12px;color:var(--text3);letter-spacing:0.2em;}
+
+.result-block{
+  background:rgba(13,33,55,0.6);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 20px;margin-bottom:14px;
+  animation:fadeSlideUp 0.3s ease;
+}
+.result-block-label{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--teal);margin-bottom:10px;
+}
+.result-matrix{font-family:var(--font-mono);font-size:13px;line-height:2;}
+.result-row{display:flex;gap:20px;}
+.result-val{min-width:52px;text-align:right;color:var(--text);}
+
+.result-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+.chip{font-family:var(--font-mono);font-size:10px;padding:3px 10px;border-radius:20px;border:1px solid;letter-spacing:0.05em;}
+.chip-teal{background:rgba(74,158,187,0.1);color:var(--teal2);border-color:rgba(74,158,187,0.3);}
+.chip-green{background:rgba(46,204,113,0.1);color:#2ecc71;border-color:rgba(46,204,113,0.3);}
+.chip-red{background:rgba(231,76,60,0.1);color:#e74c3c;border-color:rgba(231,76,60,0.3);}
+
+.error-block{
+  background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.3);
+  border-radius:var(--radius);padding:14px 18px;
+  font-family:var(--font-mono);font-size:12px;color:#e74c3c;
+  animation:fadeSlideUp 0.3s ease;
+}
+
+/* Visualize button */
+.viz-btn{
+  display:none;
+  width:100%;padding:11px;margin-top:4px;
+  background:linear-gradient(135deg,rgba(126,200,227,0.15),rgba(74,158,187,0.08));
+  border:1px solid rgba(126,200,227,0.4);border-radius:var(--radius);
+  color:var(--teal3);font-family:var(--font-display);font-size:14px;font-weight:600;
+  letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;
+  transition:all 0.25s;animation:fadeSlideUp 0.3s ease;
+}
+.viz-btn.show{display:block;}
+.viz-btn:hover{background:linear-gradient(135deg,rgba(126,200,227,0.25),rgba(74,158,187,0.15));box-shadow:0 0 16px rgba(126,200,227,0.2);}
+
+/* ════════════════════════════════
+   VISUALIZATION OVERLAY (inline expand)
+════════════════════════════════ */
+.viz-panel{
+  display:none;
+  position:relative;border-top:1px solid var(--border);
+  height:0;overflow:hidden;transition:height 0.4s cubic-bezier(0.4,0,0.2,1);
+  background:var(--bg0);flex-shrink:0;
+}
+.viz-panel.open{display:block;height:380px;}
+
+.viz-canvas-wrap{position:relative;width:100%;height:100%;}
+#viz-canvas{width:100%;height:100%;display:block;}
+#viz-canvas-3d{width:100%;height:100%;display:block;}
+
+.viz-close{
+  position:absolute;top:12px;right:16px;
+  background:rgba(13,33,55,0.8);border:1px solid var(--border);
+  border-radius:4px;color:var(--text3);font-size:13px;cursor:pointer;
+  width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;
+}
+.viz-close:hover{color:var(--teal2);border-color:var(--border2);}
+
+.viz-label{
+  position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+  font-family:var(--font-mono);font-size:10px;color:var(--text3);
+  background:rgba(6,14,26,0.8);border:1px solid var(--border);
+  border-radius:20px;padding:3px 12px;pointer-events:none;
+  letter-spacing:0.15em;white-space:nowrap;
+}
+
+/* History strip */
+.history-strip{
+  border-top:1px solid var(--border);flex-shrink:0;
+  padding:10px 28px;max-height:80px;overflow-y:auto;
+}
+.history-row{
+  display:flex;align-items:center;gap:8px;
+  padding:3px 0;border-bottom:1px solid rgba(74,158,187,0.07);
+}
+.history-row:last-child{border-bottom:none;}
+.h-op{font-family:var(--font-mono);font-size:10px;color:var(--teal);background:rgba(74,158,187,0.1);padding:1px 7px;border-radius:3px;flex-shrink:0;}
+.h-txt{font-family:var(--font-mono);font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(74,158,187,0.2);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- Corner status -->
+<div class="corner-status">
+  <div class="status-dot" id="status-dot"></div>
+  <span class="status-txt" id="status-txt">connecting...</span>
+</div>
+
+<!-- Back button -->
+<div class="back-btn" id="back-btn" onclick="goBack()">← back</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 1: MAIN MENU
+══════════════════════════════════ -->
+<div class="screen" id="screen-menu">
+  <div class="menu-title">math.vis</div>
+  <div class="menu-subtitle">linear algebra calculator</div>
+  <div class="menu-buttons">
+    <button class="menu-btn" onclick="goTo('matrix')">
+      <div class="btn-line"></div>
+      <span class="btn-num">01</span>
+      Matrix
+    </button>
+    <button class="menu-btn" onclick="goTo('vectors')">
+      <div class="btn-line"></div>
+      <span class="btn-num">02</span>
+      Vectors
+    </button>
+    <button class="menu-btn" onclick="goTo('lt')">
+      <div class="btn-line"></div>
+      <span class="btn-num">03</span>
+      Linear Transform
+    </button>
+    <button class="menu-btn exit-btn" onclick="window.close()">
+      <div class="btn-line"></div>
+      <span class="btn-num">04</span>
+      Exit
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 2: CATEGORY (dynamic)
+══════════════════════════════════ -->
+<div class="screen hidden" id="screen-cat">
+  <div class="cat-title" id="cat-title">Matrix</div>
+  <div class="cat-subtitle" id="cat-sub">select operation</div>
+  <div class="cat-grid" id="cat-grid"></div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCREEN 3: INPUT + RESULT
+══════════════════════════════════ -->
+<div class="screen hidden" id="screen-input">
+
+  <!-- Left: inputs -->
+  <div class="input-panel">
+    <div class="input-header">
+      <div class="input-op-name" id="op-name">Matrix Multiplication</div>
+      <div class="input-op-desc" id="op-desc">A × B — columns of A must equal rows of B</div>
+    </div>
+    <div class="input-scroll" id="input-area"></div>
+    <div class="input-footer">
+      <button class="calc-btn" id="calc-btn" onclick="calculate()">
+        <div class="calc-btn-inner">
+          <div class="spinner" id="spinner"></div>
+          <span id="calc-lbl">Calculate</span>
+        </div>
+      </button>
+      <button class="viz-btn" id="viz-btn" onclick="toggleViz()">⬡ Visualize</button>
+    </div>
+  </div>
+
+  <!-- Right: result -->
+  <div class="result-panel">
+    <div class="result-header">
+      <span class="result-title">Output</span>
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text3)" id="result-op-lbl"></span>
+    </div>
+
+    <div class="result-scroll" id="result-area">
+      <div class="result-empty" id="result-empty">
+        <div class="result-empty-icon">⬡</div>
+        <div class="result-empty-txt">awaiting calculation</div>
+      </div>
+    </div>
+
+    <div class="viz-panel" id="viz-panel">
+      <div class="viz-canvas-wrap">
+        <canvas id="viz-canvas"></canvas>
+        <div id="viz-3d-wrap" style="display:none;width:100%;height:100%;position:absolute;inset:0;"></div>
+        <button class="viz-close" onclick="toggleViz()">×</button>
+        <div class="viz-label" id="viz-label">visualization</div>
+      </div>
+    </div>
+
+    <div id="viz-explanation" style="display:none;padding:10px 28px 8px;border-top:1px solid var(--border);background:rgba(6,14,26,0.6);">
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);line-height:1.7;" id="viz-explanation-txt"></span>
+    </div>
+
+    <div class="history-strip">
+      <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;color:var(--text3);margin-bottom:6px;text-transform:uppercase;">History</div>
+      <div id="history-list"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const API = 'http://127.0.0.1:8000';
+
+/* ─────────────────────────────────────────
+   NAVIGATION
+───────────────────────────────────────── */
+let navStack = ['menu'];
+let currentCategory = null;
+let currentOp = null;
+
+const screens = {
+  menu: document.getElementById('screen-menu'),
+  cat:  document.getElementById('screen-cat'),
+  input:document.getElementById('screen-input'),
+};
+
+function showScreen(name, dir='forward') {
+  Object.values(screens).forEach(s => {
+    s.classList.add(dir === 'forward' ? 'slide-left' : 'slide-right');
+    s.classList.remove('hidden');
+  });
+  setTimeout(() => {
+    Object.values(screens).forEach(s => s.classList.add('hidden'));
+    const target = screens[name];
+    target.classList.remove('hidden','slide-left','slide-right');
+    document.getElementById('back-btn').classList.toggle('visible', name !== 'menu');
+  }, 10);
+}
+
+function goTo(category) {
+  currentCategory = category;
+  navStack.push('cat');
+  buildCatScreen(category);
+  showScreen('cat');
+}
+
+function goToOp(op) {
+  currentOp = op;
+  navStack.push('input');
+  buildInputScreen(op);
+  showScreen('input');
+}
+
+function goBack() {
+  navStack.pop();
+  const prev = navStack[navStack.length - 1];
+  showScreen(prev, 'back');
+  if (prev === 'menu') document.getElementById('back-btn').classList.remove('visible');
+}
+
+/* ─────────────────────────────────────────
+   CATEGORY SCREENS
+───────────────────────────────────────── */
+const categories = {
+  matrix: {
+    title: 'Matrix', sub: 'select operation',
+    ops: [
+      { id:'multiply', name:'Multiplication', desc:'A × B product' },
+      { id:'info',     name:'Matrix Info',   desc:'REF · det · inverse' },
+      { id:'diag',     name:'Diagonalize',   desc:'P⁻¹AP = D' },
+      { id:'jordan',   name:'Jordan Form',   desc:'J + char. poly' },
+    ]
+  },
+  vectors: {
+    title: 'Vectors', sub: 'select vector type & operation',
+    ops: [
+      { id:'num-inner',    name:'Number · Inner Product', desc:'⟨v, w⟩' },
+      { id:'num-base',     name:'Number · Is a Base?',    desc:'det check' },
+      { id:'gram-schmidt', name:'Gram-Schmidt',           desc:'orthogonalize a set' },
+      { id:'mat-inner',    name:'Matrix · Inner Product', desc:'Tr(Bᵀ·A)' },
+      { id:'mat-base',     name:'Matrix · Is a Base?',    desc:'flatten + det' },
+      { id:'poly-inner',   name:'Poly · Inner Product',   desc:'∫₀¹ PQ dx' },
+      { id:'poly-base',    name:'Poly · Is a Base?',      desc:'AI-assisted' },
+    ]
+  },
+  lt: {
+    title: 'Linear Transform', sub: 'select operation',
+    ops: [
+      { id:'lt-matrix', name:'Representing Matrix', desc:'[T]_E standard basis' },
+      { id:'lt-kerimg', name:'Ker(T) & Im(T)',       desc:'nullspace + colspace' },
+      { id:'lt-islt',   name:'Is Linear?',           desc:'AI verification' },
+      { id:'lt-isiso',  name:'Is Isomorphic?',       desc:'det + dim check' },
+    ]
+  }
+};
+
+function buildCatScreen(cat) {
+  const c = categories[cat];
+  document.getElementById('cat-title').textContent = c.title;
+  document.getElementById('cat-sub').textContent = c.sub;
+  const grid = document.getElementById('cat-grid');
+  const cols = c.ops.length > 4 ? 3 : 2;
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.innerHTML = c.ops.map((op, i) => `
+    <button class="cat-btn" onclick="goToOp('${op.id}')" style="animation-delay:${i*0.05}s">
+      <div class="cat-btn-num">0${i+1}</div>
+      <div class="cat-btn-name">${op.name}</div>
+      <div class="cat-btn-desc">${op.desc}</div>
+    </button>`).join('');
+}
+
+/* ─────────────────────────────────────────
+   INPUT SCREEN BUILDER
+───────────────────────────────────────── */
+const opMeta = {
+  'multiply':  { name:'Matrix Multiplication', desc:'A × B — columns of A must equal rows of B' },
+  'info':      { name:'Matrix Info',           desc:'Row echelon · determinant · inverse' },
+  'diag':      { name:'Diagonalization',       desc:'Find P and D such that P⁻¹AP = D' },
+  'jordan':    { name:'Jordan Form',           desc:'Jordan matrix J and characteristic polynomial' },
+  'num-inner': { name:'Number Vector Inner Product', desc:'⟨V1, V2⟩ = Σ vᵢwᵢ' },
+  'num-base':  { name:'Is a Base?',            desc:'Check if vectors form a basis via det' },
+  'gram-schmidt': { name:'Gram-Schmidt Orthogonalization', desc:'Produce an orthonormal basis from a set of vectors' },
+  'mat-inner': { name:'Matrix Inner Product',  desc:'⟨A, B⟩ = Tr(Bᵀ·A)' },
+  'mat-base':  { name:'Matrices Form a Base?', desc:'Flatten to vectors, check determinant' },
+  'poly-inner':{ name:'Polynomial Inner Product', desc:'⟨P, Q⟩ = ∫₀¹ P(x)Q(x) dx' },
+  'poly-base': { name:'Polynomials Form a Base?', desc:'Check independence in dim n' },
+  'lt-matrix': { name:'Representing Matrix',  desc:'Compute [T]_E in standard basis via AI' },
+  'lt-kerimg': { name:'Ker(T) and Im(T)',      desc:'Kernel and image of the transformation' },
+  'lt-islt':   { name:'Is it Linear?',         desc:'AI verifies the transformation properties' },
+  'lt-isiso':  { name:'Is it Isomorphic?',     desc:'det ≠ 0 and dim(V) = dim(U)' },
+};
+
+let matA = { rows:2, cols:2, data:[[2,-1],[0,3]] };
+let matB = { rows:2, cols:2, data:[[1,4],[-2,5]] };
+let numVecs = [[1,0,0],[0,1,0],[0,0,1]];
+let mtxGroup = [[[1,0],[0,0]],[[0,1],[0,0]]];
+
+function buildInputScreen(op) {
+  const meta = opMeta[op];
+  document.getElementById('op-name').textContent = meta.name;
+  document.getElementById('op-desc').textContent = meta.desc;
+  document.getElementById('result-op-lbl').textContent = op.replace(/-/g,' ');
+  resetResult();
+  document.getElementById('viz-btn').classList.remove('show');
+  closeViz();
+
+  const area = document.getElementById('input-area');
+  let h = '';
+
+  if (['multiply','info','diag','jordan'].includes(op)) {
+    h += matInputHTML('A', matA);
+    if (op === 'multiply') h += matInputHTML('B', matB);
+    if (op === 'jordan') h += `<div style="margin-top:12px;padding:10px 14px;background:rgba(74,158,187,0.06);border:1px solid rgba(74,158,187,0.2);border-radius:var(--radius);">
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text3);line-height:1.6">
+        ⚠ the more complex values you input the more time it takes to calculate, please keep it in mind
+      </span>
+    </div>`;
+
+  } else if (op === 'num-inner') {
+    h = `<div style="margin-bottom:12px">
+      <div class="field-label">Vector V1 <span>(space-separated)</span></div>
+      <input class="txt-input" id="v-v1" value="1 2 3" placeholder="1 2 3"/>
+    </div>
+    <div style="margin-bottom:12px">
+      <div class="field-label">Vector V2</div>
+      <input class="txt-input" id="v-v2" value="4 5 6" placeholder="4 5 6"/>
+    </div>`;
+
+  } else if (op === 'num-base') {
+    h = `<div class="field-label">Vectors <span>(one per row)</span></div>`;
+    numVecs.forEach((v,i) => {
+      h += `<div style="display:flex;gap:6px;margin-bottom:4px">
+        <input class="txt-input" id="v-vec-${i}" value="${v.join(' ')}" style="flex:1"/>
+        <button class="remove-x" onclick="removeNumVec(${i})">×</button>
+      </div>`;
+    });
+    h += `<button class="add-vec-btn" onclick="addNumVec()">+ add vector</button>`;
+
+  } else if (op === 'gram-schmidt') {
+    h = `<div class="field-label">Vectors <span>(one per row, space-separated)</span></div>`;
+    numVecs.forEach((v,i) => {
+      h += `<div style="display:flex;gap:6px;margin-bottom:4px">
+        <input class="txt-input" id="v-vec-${i}" value="${v.join(' ')}" style="flex:1"/>
+        <button class="remove-x" onclick="removeNumVec(${i})">×</button>
+      </div>`;
+    });
+    h += `<button class="add-vec-btn" onclick="addNumVec()">+ add vector</button>
+    <div style="margin-top:12px;font-family:var(--font-mono);font-size:10px;color:var(--text3);line-height:1.6">
+      Returns an orthonormal basis via Gram-Schmidt.<br/>Vectors must be linearly independent.
+    </div>`;
+
+  } else if (op === 'mat-inner') {
+    h = matInputHTML('A', matA) + matInputHTML('B', matB);
+
+  } else if (op === 'mat-base') {
+    h = `<div class="field-label">Matrices</div>`;
+    mtxGroup.forEach((m,i) => {
+      h += `<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--teal)">M${i+1}</span>
+          <button class="remove-x" onclick="removeMtx(${i})">×</button>
+        </div>
+        <textarea class="txt-input" id="v-mtx-${i}" rows="2">${m.map(r=>r.join(' ')).join('\n')}</textarea>
+      </div>`;
+    });
+    h += `<button class="add-vec-btn" onclick="addMtx()">+ add matrix</button>`;
+
+  } else if (op === 'poly-inner') {
+    h = `<div class="ai-badge">⚡ AI-assisted input</div>
+    <div style="margin-bottom:12px">
+      <div class="field-label">Polynomial P</div>
+      <input class="txt-input" id="v-p1" value="x**2 + 1" placeholder="x**2 + 2*x + 1"/>
+    </div>
+    <div style="margin-bottom:12px">
+      <div class="field-label">Polynomial Q</div>
+      <input class="txt-input" id="v-p2" value="x + 1" placeholder="x + 3"/>
+    </div>`;
+
+  } else if (op === 'poly-base') {
+    h = `<div class="ai-badge">⚡ AI-assisted input</div>
+    <div style="margin-bottom:12px">
+      <div class="field-label">Polynomials <span>(one per line)</span></div>
+      <textarea class="txt-input" id="v-polys" rows="4" placeholder="x**2&#10;x&#10;1">x**2\nx\n1</textarea>
+    </div>`;
+
+  } else if (['lt-matrix','lt-kerimg','lt-islt','lt-isiso'].includes(op)) {
+    const ex = { 'lt-matrix':'T(x,y) = (2x+y, x-y)', 'lt-kerimg':'T(x,y,z) = (x+y, y+z, 0)', 'lt-islt':'T(x,y) = (x^2, y)', 'lt-isiso':'T(x,y) = (x+y, x-y)' };
+    h = `<div class="ai-badge">⚡ AI-assisted input</div>
+    <div style="margin-bottom:12px">
+      <div class="field-label">Transformation</div>
+      <input class="txt-input" id="lt-input" value="${ex[op]}" placeholder="${ex[op]}"/>
+    </div>`;
+  }
+
+  area.innerHTML = h;
+}
+
+function matInputHTML(name, mat) {
+  let cells = '';
+  for (let r=0;r<mat.rows;r++)
+    for (let c=0;c<mat.cols;c++) {
+      const v = mat.data[r]?.[c] ?? 0;
+      cells += `<input class="mat-cell" type="text" value="${v}"
+        oninput="updateCell('${name}',${r},${c},this.value)" placeholder="0"/>`;
+    }
+  return `<div style="margin-bottom:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span class="matrix-name-tag">${name}</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="size-controls" style="margin:0">
+          <button class="sz-btn" onclick="rszMat('${name}','rows',-1)">−</button>
+          <span class="sz-val">${mat.rows}</span>
+          <button class="sz-btn" onclick="rszMat('${name}','rows',1)">+</button>
+        </div>
+        <span style="color:var(--text3);font-size:11px">×</span>
+        <div class="size-controls" style="margin:0">
+          <button class="sz-btn" onclick="rszMat('${name}','cols',-1)">−</button>
+          <span class="sz-val">${mat.cols}</span>
+          <button class="sz-btn" onclick="rszMat('${name}','cols',1)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="mat-grid" style="grid-template-columns:repeat(${mat.cols},1fr)">${cells}</div>
+  </div>`;
+}
+
+function updateCell(name,r,c,val) {
+  const m = name==='A'?matA:matB;
+  if (!m.data[r]) m.data[r]=[];
+  m.data[r][c] = val; // keep as string so complex/sqrt values pass through to backend
+}
+
+function rszMat(name,dim,d) {
+  const m = name==='A'?matA:matB;
+  if (dim==='rows') { const n=Math.max(1,Math.min(6,m.rows+d)); while(m.data.length<n) m.data.push(new Array(m.cols).fill(0)); m.data=m.data.slice(0,n); m.rows=n; }
+  else { const n=Math.max(1,Math.min(6,m.cols+d)); m.data=m.data.map(r=>{while(r.length<n)r.push(0);return r.slice(0,n);}); m.cols=n; }
+  buildInputScreen(currentOp);
+}
+
+function readMat(name) {
+  const m = name==='A'?matA:matB;
+  const inputs = document.querySelectorAll('#input-area .mat-cell');
+  const off = name==='B' ? matA.rows*matA.cols : 0;
+  const data=[];
+  for(let r=0;r<m.rows;r++){data[r]=[];for(let c=0;c<m.cols;c++) data[r][c]=inputs[off+r*m.cols+c]?.value||'0';}
+  return data;
+}
+
+function addNumVec(){numVecs.push([0,0,0]);buildInputScreen(currentOp);}
+function removeNumVec(i){numVecs.splice(i,1);buildInputScreen(currentOp);}
+function addMtx(){mtxGroup.push([[1,0],[0,1]]);buildInputScreen(currentOp);}
+function removeMtx(i){mtxGroup.splice(i,1);buildInputScreen(currentOp);}
+function parseVec(s){return s.trim().split(/\s+/).filter(Boolean);}
+function parseMtxStr(s){return s.trim().split('\n').map(r=>r.trim().split(/\s+/).filter(Boolean));}
+
+/* ─────────────────────────────────────────
+   CALCULATE
+───────────────────────────────────────── */
+async function calculate() {
+  setLoading(true);
+  resetResult();
+  try {
+    let endpoint, body, data;
+    const op = currentOp;
+
+    if (op==='multiply')   { endpoint='/matrix/multiply';    body={A:readMat('A'),B:readMat('B')}; }
+    else if(op==='info')   { endpoint='/matrix/info'; const Adata=readMat('A'); lastInputMatrix=Adata; body={A:Adata}; }
+    else if(op==='diag')   { endpoint='/matrix/diagonalize'; const Adata=readMat('A'); lastInputMatrix=Adata; body={A:Adata}; }
+    else if(op==='jordan') { endpoint='/matrix/jordan';      body={A:readMat('A')}; }
+    else if(op==='num-inner') { endpoint='/vectors/number/inner'; body={V1:parseVec(document.getElementById('v-v1').value),V2:parseVec(document.getElementById('v-v2').value)}; }
+    else if(op==='num-base')  { endpoint='/vectors/number/isbase'; body={vectors:numVecs.map((_,i)=>parseVec(document.getElementById(`v-vec-${i}`).value))}; }
+    else if(op==='gram-schmidt') { endpoint='/vectors/gram-schmidt'; body={vectors:numVecs.map((_,i)=>parseVec(document.getElementById(`v-vec-${i}`).value))}; }
+    else if(op==='mat-inner') { endpoint='/vectors/matrix/inner'; body={A:readMat('A'),B:readMat('B')}; }
+    else if(op==='mat-base')  { endpoint='/vectors/matrix/isbase'; body={matrices:mtxGroup.map((_,i)=>parseMtxStr(document.getElementById(`v-mtx-${i}`).value))}; }
+    else if(op==='poly-inner'){ endpoint='/vectors/poly/inner'; body={poly1:document.getElementById('v-p1').value,poly2:document.getElementById('v-p2').value}; }
+    else if(op==='poly-base') { endpoint='/vectors/poly/isbase'; body={polys:document.getElementById('v-polys').value.trim().split('\n').map(s=>s.trim()).filter(Boolean)}; }
+    else if(op==='lt-matrix') { endpoint='/lt/matrix'; body={transformation:document.getElementById('lt-input').value}; }
+    else if(op==='lt-kerimg') { endpoint='/lt/kerimg'; body={transformation:document.getElementById('lt-input').value}; }
+    else if(op==='lt-islt')   { endpoint='/lt/islt';   body={transformation:document.getElementById('lt-input').value}; }
+    else if(op==='lt-isiso')  { endpoint='/lt/isiso';  body={transformation:document.getElementById('lt-input').value}; }
+
+    data = await api(endpoint, body);
+    renderResult(data, op);
+    addHistory(op, data);
+    lastResultData = data;
+
+    const hasViz = canVisualize(op, data);
+    document.getElementById('viz-btn').classList.toggle('show', hasViz);
+
+  } catch(e) {
+    document.getElementById('result-area').innerHTML =
+      `<div class="error-block">Could not connect to backend. Is the server running?</div>`;
+  }
+  setLoading(false);
+}
+
+function canVisualize(op, data) {
+  if (['multiply','info','diag','jordan','lt-matrix','lt-kerimg'].includes(op) && !data.error) return true;
+  if (op==='num-inner' && !data.error) return true;
+  // gram-schmidt: skip visual if any vector value is complex
+  if (op==='gram-schmidt' && !data.error) {
+    const hasComplex = data.result && data.result.some(vec => vec.some(v => isComplexStr(String(v))));
+    return !hasComplex;
+  }
+  return false;
+}
+
+function renderResult(data, op) {
+  const area = document.getElementById('result-area');
+  if (data.error) { area.innerHTML = `<div class="error-block">${data.error}</div>`; return; }
+  let h = '';
+
+  if (data.result && Array.isArray(data.result) && data.result.length > 0 && Array.isArray(data.result[0])) {
+    // gram-schmidt returns list of vectors (each is a list), not a matrix
+    if (op === 'gram-schmidt') {
+      h += `<div class="result-block"><div class="result-block-label">Orthonormal basis</div><div class="result-matrix">`;
+      data.result.forEach((vec, i) => {
+        const flat = vec.flat ? vec.flat() : vec;
+        h += `<div style="margin-bottom:6px">
+          <span style="font-family:var(--font-mono);font-size:10px;color:var(--teal);margin-right:8px">u${i+1}</span>
+          <span class="result-row" style="display:inline-flex">${flat.map(v=>`<span class="result-val">${fmt(v)}</span>`).join('')}</span>
+        </div>`;
+      });
+      h += `</div></div>`;
+    } else {
+      h += matBlock('Result matrix', data.result);
+    }
+  } else if (data.result && Array.isArray(data.result)) {
+    h += matBlock('Result matrix', data.result);
+  }
+  if (data.rref)    h += matBlock('Row echelon form', data.rref);
+  if (data.inverse && Array.isArray(data.inverse)) h += matBlock('Inverse A⁻¹', data.inverse);
+  if (data.D)       h += matBlock('Diagonal matrix D', data.D);
+  if (data.P)       h += matBlock('Matrix P  (P⁻¹AP = D)', data.P);
+  if (data.J)       h += matBlock('Jordan form J', data.J);
+
+  if (data.determinant !== undefined) {
+    h += `<div class="result-block"><div class="result-block-label">Properties</div>
+      <div class="result-chips">
+        <span class="chip chip-teal">det = ${fmt(data.determinant)}</span>
+        <span class="chip ${data.inverse?'chip-green':'chip-red'}">${data.inverse?'invertible':'singular'}</span>
+      </div></div>`;
+  }
+  if (data.message) {
+    h += `<div class="result-block"><div class="result-block-label">Verdict</div>
+      <span class="chip ${data.is_diagonalizable||data.result===true?'chip-green':'chip-red'}">${data.message}</span></div>`;
+  }
+  if (data.char_poly) {
+    h += `<div class="result-block"><div class="result-block-label">Characteristic polynomial</div>
+      <div style="font-family:var(--font-mono);font-size:13px;color:var(--teal2)">${data.char_poly}</div></div>`;
+  }
+  if (data.min_poly) {
+    h += `<div class="result-block"><div class="result-block-label">Minimal polynomial</div>
+      <div style="font-family:var(--font-mono);font-size:13px;color:var(--teal3)">${data.min_poly}</div></div>`;
+  }
+  if (data.result && typeof data.result === 'string' && !isComplexStr(data.result)) {
+    const good = !data.result.toLowerCase().includes('not');
+    h += `<div class="result-block"><div class="result-block-label">Verdict</div>
+      <span class="chip ${good?'chip-green':'chip-red'}">${data.result}</span></div>`;
+  }
+  if (typeof data.result === 'number' || (isComplexStr(String(data.result)) && !Array.isArray(data.result))) {
+    h += `<div class="result-block"><div class="result-block-label">Result</div>
+      <span style="font-family:var(--font-mono);font-size:28px;font-weight:500;color:var(--teal2)">${fmt(data.result)}</span></div>`;
+  }
+  if (typeof data.result === 'boolean') {
+    h += `<div class="result-block"><div class="result-block-label">Verdict</div>
+      <span class="chip ${data.result?'chip-green':'chip-red'}">${data.message||String(data.result)}</span></div>`;
+  }
+  if (data.Ker !== undefined) {
+    h += `<div class="result-block"><div class="result-block-label">Ker(T)</div><div class="result-matrix">`;
+    if (!data.Ker.length) h += '<span style="color:var(--text3)">{ 0 }</span>';
+    else data.Ker.forEach(v=>{h+=`<div class="result-row">${v.flat().map(x=>`<span class="result-val">${fmt(x)}</span>`).join('')}</div>`;});
+    h += `</div></div>`;
+    h += `<div class="result-block"><div class="result-block-label">Im(T)</div><div class="result-matrix">`;
+    if (!data.Img.length) h += '<span style="color:var(--text3)">{ 0 }</span>';
+    else data.Img.forEach(v=>{h+=`<div class="result-row">${v.flat().map(x=>`<span class="result-val">${fmt(x)}</span>`).join('')}</div>`;});
+    h += `</div></div>`;
+  }
+
+  area.innerHTML = h || '<div style="color:var(--text3);font-family:var(--font-mono);font-size:12px">No output.</div>';
+}
+
+function matBlock(label, rows) {
+  let h = `<div class="result-block"><div class="result-block-label">${label}</div><div class="result-matrix">`;
+  rows.forEach(row => {
+    h += `<div class="result-row">${row.map(v=>`<span class="result-val">${fmt(v)}</span>`).join('')}</div>`;
+  });
+  return h + '</div></div>';
+}
+
+/* ─────────────────────────────────────────
+   VISUALIZATIONS
+───────────────────────────────────────── */
+let lastResultData = null;
+let lastInputMatrix = null;
+let vizOpen = false;
+let animId = null;
+
+const vizExplanations = {
+  'multiply':    '⬡  the result matrix shows how the transformation A followed by B maps each basis vector — each column is where eᵢ lands after both transforms.',
+  'info':        '⬡  the grid stretches, shears, or flips based on the matrix — the area of the unit square scales by exactly |det(A)|. negative det means space flipped.',
+  'diag':        '⬡  each eigenvector points along a direction that only gets scaled — not rotated. the eigenvalue λ is the stretch factor along that direction.',
+  'jordan':      '⬡  unlike diagonal form, jordan blocks chain directions together — direction 1 feeds into direction 2, like a shear or a flow along a line. the bigger the block, the longer the chain.',
+  'num-inner':   '⬡  inner product measures how much two vectors point in the same direction. the angle between them is what matters — 0° means parallel, 90° means orthogonal.',
+  'gram-schmidt':'⬡  each new vector gets its projection onto all previous ones subtracted out, leaving only the perpendicular component. the result is a set of orthonormal axes.',
+  'lt-matrix':   '⬡  the representing matrix shows exactly where each standard basis vector goes under T — column i is T(eᵢ). everything else follows by linearity.',
+  'lt-kerimg':   '⬡  ker(T) is the set of all vectors that collapse to zero — the "blind spots" of T. im(T) is all the directions T can actually reach.',
+};
+
+function setVizExplanation(op) {
+  const el = document.getElementById('viz-explanation');
+  const txt = document.getElementById('viz-explanation-txt');
+  const msg = vizExplanations[op];
+  if (msg) {
+    txt.textContent = msg;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function toggleViz() {
+  vizOpen = !vizOpen;
+  const panel = document.getElementById('viz-panel');
+  if (vizOpen) {
+    panel.classList.add('open');
+    setTimeout(()=>renderViz(currentOp, lastResultData), 50);
+    setVizExplanation(currentOp);
+  } else {
+    closeViz();
+  }
+}
+
+function closeViz() {
+  vizOpen = false;
+  document.getElementById('viz-panel').classList.remove('open');
+  document.getElementById('viz-explanation').style.display = 'none';
+  if (animId) { cancelAnimationFrame(animId); animId=null; }
+  // cleanup three.js if needed
+  const wrap = document.getElementById('viz-3d-wrap');
+  wrap.innerHTML=''; wrap.style.display='none';
+  document.getElementById('viz-canvas').style.display='block';
+}
+
+function renderViz(op, data) {
+  if (!data || data.error) return;
+
+  // determine if 3d
+  const is3D = needs3D(op, data);
+  const canvas2d = document.getElementById('viz-canvas');
+  const wrap3d = document.getElementById('viz-3d-wrap');
+
+  if (is3D) {
+    canvas2d.style.display='none';
+    wrap3d.style.display='block';
+    render3D(data);
+    document.getElementById('viz-label').textContent='3D — drag to rotate';
+  } else {
+    canvas2d.style.display='block';
+    wrap3d.style.display='none';
+    render2D(op, data);
+  }
+}
+
+function needs3D(op, data) {
+  if (op === 'num-inner') {
+    if (isComplexStr(String(data.result))) return false; // complex result → use complex plane viz
+    const v1 = parseVec(document.getElementById('v-v1')?.value || '');
+    return v1.length === 3;
+  }
+  // diag: check the input matrix size, but force 2D if any eigenvalue is complex
+  if (op === 'diag') {
+    if (data.D && data.D.some(row => row.some(v => isComplexStr(String(v)) && String(v).match(/([+-]?[\d.eE]+)j/) && Math.abs(parseFloat(String(v).match(/([+-]?[\d.eE]+)j/)[1])) > 1e-10))) return false;
+    return lastInputMatrix && lastInputMatrix.length >= 3;
+  }
+  if (!data.result || !Array.isArray(data.result)) return false;
+  return data.result.length >= 3 && (data.result[0]||[]).length >= 3;
+}
+
+/* ── 2D Canvas visualization ── */
+function render2D(op, data) {
+  const canvas = document.getElementById('viz-canvas');
+  const panel = document.getElementById('viz-panel');
+  canvas.width = panel.offsetWidth;
+  canvas.height = panel.offsetHeight;
+  const ctx = canvas.getContext('2d');
+
+  if (op === 'num-inner') {
+    const isComplex = isComplexStr(String(data.result));
+    if (isComplex) {
+      drawComplexInnerProduct(ctx, canvas.width, canvas.height, data);
+      document.getElementById('viz-label').textContent = 'complex inner product — complex plane + polar form';
+    } else {
+      drawVectorAngle(ctx, canvas.width, canvas.height, data);
+      document.getElementById('viz-label').textContent = '2D x,y plane — angle between vectors';
+    }
+  } else if (op === 'gram-schmidt') {
+    drawGramSchmidtViz(ctx, canvas.width, canvas.height, data);
+    document.getElementById('viz-label').textContent = 'gram-schmidt — projection & orthogonalization';
+  } else if (op === 'diag') {
+    drawEigenViz2D(ctx, canvas.width, canvas.height, data);
+    document.getElementById('viz-label').textContent = 'eigenvectors — each span stretches by λ';
+  } else if (op === 'jordan') {
+    drawJordanViz(ctx, canvas.width, canvas.height, data);
+    document.getElementById('viz-label').textContent = 'jordan — direction 1 feeds into direction 2';
+  } else if (['multiply','info','lt-matrix','lt-kerimg'].includes(op) && data.result && Array.isArray(data.result)) {
+    drawTransformAnim(ctx, canvas.width, canvas.height, data.result);
+    document.getElementById('viz-label').textContent = 'linear transformation — column vectors';
+  } else if (op === 'info' && data.determinant !== undefined) {
+    drawDetAnim(ctx, canvas.width, canvas.height, data);
+    document.getElementById('viz-label').textContent = 'determinant — grid stretching by ' + fmt(data.determinant);
+  }
+}
+
+/* ── Determinant: full grid stretch animation (3B1B style) ── */
+function drawDetAnim(ctx, W, H, data) {
+  let t = 0;
+  const det = data.determinant;
+  const cx = W/2, cy = H/2, scale = 48;
+  const isNeg = det < 0;
+
+  // Get the actual 2x2 matrix that was submitted
+  // Columns: col1 = [m00, m10], col2 = [m01, m11]
+  const mat = lastInputMatrix;
+  const m00 = isComplexStr(String(mat?.[0]?.[0])) ? 1 : evalFrac(mat?.[0]?.[0] ?? 1);
+  const m10 = isComplexStr(String(mat?.[1]?.[0])) ? 0 : evalFrac(mat?.[1]?.[0] ?? 0);
+  const m01 = isComplexStr(String(mat?.[0]?.[1])) ? 0 : evalFrac(mat?.[0]?.[1] ?? 0);
+  const m11 = isComplexStr(String(mat?.[1]?.[1])) ? 1 : evalFrac(mat?.[1]?.[1] ?? 1);
+
+  // Transform a point (gx, gy) in grid coords to screen coords
+  // lerp between identity and the matrix using prog [0..1]
+  function transform(gx, gy, prog) {
+    const tx = gx * (1 + prog * (m00 - 1)) + gy * prog * m01;
+    const ty = gx * prog * m10 + gy * (1 + prog * (m11 - 1));
+    return {
+      x: cx + tx * scale,
+      y: cy - ty * scale
+    };
+  }
+
+  const gridRange = 6; // draw grid lines from -6 to 6
+
+  function frame() {
+    t += 0.008;
+    ctx.clearRect(0, 0, W, H);
+
+    // prog oscillates smoothly 0 → 1 → 0
+    const prog = (Math.sin(t - Math.PI/2) + 1) / 2;
+
+    // ── Draw transformed grid lines ──
+    ctx.lineWidth = 0.5;
+
+    for (let i = -gridRange; i <= gridRange; i++) {
+      // Vertical lines (constant x = i, y varies)
+      ctx.strokeStyle = i === 0 ? 'rgba(74,158,187,0.5)' : 'rgba(74,158,187,0.12)';
+      ctx.beginPath();
+      const p0 = transform(i, -gridRange, prog);
+      ctx.moveTo(p0.x, p0.y);
+      for (let j = -gridRange; j <= gridRange; j++) {
+        const p = transform(i, j, prog);
+        ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+
+      // Horizontal lines (constant y = i, x varies)
+      ctx.strokeStyle = i === 0 ? 'rgba(74,158,187,0.5)' : 'rgba(74,158,187,0.12)';
+      ctx.beginPath();
+      const q0 = transform(-gridRange, i, prog);
+      ctx.moveTo(q0.x, q0.y);
+      for (let j = -gridRange; j <= gridRange; j++) {
+        const q = transform(j, i, prog);
+        ctx.lineTo(q.x, q.y);
+      }
+      ctx.stroke();
+    }
+
+    // ── Highlight the unit square → parallelogram ──
+    const sq00 = transform(0, 0, prog);
+    const sq10 = transform(1, 0, prog);
+    const sq11 = transform(1, 1, prog);
+    const sq01 = transform(0, 1, prog);
+
+    // Fill — red if det negative (flip), teal otherwise
+    const fillColor = isNeg
+      ? `rgba(231,76,60,${0.08 + prog * 0.1})`
+      : `rgba(126,200,227,${0.06 + prog * 0.1})`;
+    const strokeColor = isNeg
+      ? `rgba(231,76,60,${0.4 + prog * 0.3})`
+      : `rgba(126,200,227,${0.4 + prog * 0.3})`;
+
+    ctx.fillStyle = fillColor;
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(sq00.x, sq00.y);
+    ctx.lineTo(sq10.x, sq10.y);
+    ctx.lineTo(sq11.x, sq11.y);
+    ctx.lineTo(sq01.x, sq01.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // ── Basis vectors ──
+    const bx = transform(1, 0, prog);
+    const by = transform(0, 1, prog);
+    drawGlowArrow(ctx, cx, cy, bx.x, bx.y, '#4a9ebb', 'î');
+    drawGlowArrow(ctx, cx, cy, by.x, by.y, '#7ec8e3', 'ĵ');
+
+    // ── Area label (scales with det) ──
+    const currentArea = (1 - prog) * 1 + prog * Math.abs(det);
+    const areaLabel = `area = ${currentArea.toFixed(2)}`;
+    ctx.font = '500 12px "JetBrains Mono"';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = isNeg ? '#e74c3c' : '#7ec8e3';
+    ctx.fillText(areaLabel, 16, H - 36);
+
+    // ── Det value ──
+    const detColor = Math.abs(det) < 0.001 ? '#e74c3c' : isNeg ? '#e74c3c' : '#7ec8e3';
+    ctx.font = 'bold 14px "JetBrains Mono"';
+    ctx.fillStyle = detColor;
+    ctx.textAlign = 'left';
+    ctx.fillText(`det = ${fmt(det)}`, 16, H - 16);
+
+    // ── Flip label if det is negative ──
+    if (isNeg && prog > 0.5) {
+      ctx.font = '500 11px "JetBrains Mono"';
+      ctx.fillStyle = 'rgba(231,76,60,0.7)';
+      ctx.textAlign = 'center';
+      ctx.fillText('space flipped!', W/2, 24);
+    }
+
+    animId = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+/* ── Complex inner product: complex plane + polar ── */
+function drawComplexInnerProduct(ctx, W, H, data) {
+  const cx = W/2, cy = H/2;
+  // parse complex result string like "(2+3j)" or "3j"
+  const s = String(data.result).replace(/[()]/g, '');
+  const re = parseFloat(s) || 0;
+  const imMatch = s.match(/([+-]?[\d.eE]+)j/);
+  const im = imMatch ? parseFloat(imMatch[1]) : 0;
+  const mag = Math.sqrt(re*re + im*im);
+  const angle = Math.atan2(im, re);
+
+  // scale so the point fits nicely
+  const maxVal = Math.max(mag, 1);
+  const scale = Math.min(cx, cy) * 0.6 / maxVal;
+
+  let t = 0;
+  function frame() {
+    t += 0.015;
+    ctx.clearRect(0, 0, W, H);
+
+    // draw axes
+    ctx.strokeStyle = 'rgba(74,158,187,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke(); // real axis
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke(); // imag axis
+
+    // axis labels
+    ctx.font = '10px "JetBrains Mono"'; ctx.fillStyle = 'rgba(74,158,187,0.5)'; ctx.textAlign='center';
+    ctx.fillText('Re', W - 20, cy - 8);
+    ctx.fillText('Im', cx + 20, 16);
+
+    // unit circle (faint)
+    ctx.save(); ctx.globalAlpha = 0.08; ctx.strokeStyle = '#4a9ebb'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, scale * maxVal, 0, Math.PI*2); ctx.stroke();
+    ctx.restore();
+
+    // rotating angle arc
+    const pulse = (Math.sin(t*2)+1)/2;
+    const arcR = 30 + pulse*5;
+    ctx.save(); ctx.globalAlpha = 0.5; ctx.strokeStyle = '#7ec8e3'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx + arcR, cy); ctx.arc(cx, cy, arcR, 0, -angle, angle < 0); ctx.stroke();
+    ctx.restore();
+
+    // the point on the complex plane
+    const px = cx + re * scale;
+    const py = cy - im * scale;
+
+    // dashed lines to axes
+    ctx.save(); ctx.globalAlpha = 0.3; ctx.strokeStyle = '#4a9ebb'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(cx, py); ctx.stroke();
+    ctx.setLineDash([]); ctx.restore();
+
+    // arrow from origin to point
+    ctx.save();
+    ctx.strokeStyle = '#7ec8e3'; ctx.fillStyle = '#7ec8e3';
+    ctx.lineWidth = 2; ctx.shadowColor = '#7ec8e3'; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+    // arrowhead
+    const ang = Math.atan2(py - cy, px - cx);
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px - 10*Math.cos(ang-0.4), py - 10*Math.sin(ang-0.4));
+    ctx.lineTo(px - 10*Math.cos(ang+0.4), py - 10*Math.sin(ang+0.4));
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    // dot at point
+    ctx.save(); ctx.fillStyle = '#7ec8e3'; ctx.shadowColor = '#7ec8e3'; ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI*2); ctx.fill(); ctx.restore();
+
+    // info labels top-left — magnitude and angle only (result already shown in output panel)
+    const sign = im >= 0 ? '+' : '';
+    const angleDeg = (angle * 180 / Math.PI).toFixed(1);
+    ctx.font = 'bold 13px "JetBrains Mono"'; ctx.textAlign = 'left';
+    const lines = [
+      { text: `|result| = ${parseFloat(mag.toFixed(4))}`, col: '#4a9ebb' },
+      { text: `arg = ${angleDeg}°`, col: '#b0dff0' },
+    ];
+    lines.forEach((l, i) => {
+      const tw = ctx.measureText(l.text).width;
+      ctx.fillStyle = 'rgba(6,14,26,0.85)';
+      ctx.beginPath(); ctx.roundRect(12, 12 + i*22, tw+12, 18, 4); ctx.fill();
+      ctx.fillStyle = l.col; ctx.shadowColor = l.col; ctx.shadowBlur = 6;
+      ctx.fillText(l.text, 18, 26 + i*22);
+    });
+
+    animId = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+/* ── Vector angle visualization (2D x,y plane) ── */
+function drawVectorAngle(ctx, W, H, data) {
+  const cx=W/2, cy=H/2, scale=55;
+
+  const v1s = document.getElementById('v-v1')?.value || '';
+  const v2s = document.getElementById('v-v2')?.value || '';
+
+  // parse each component — for complex entries take the real part for 2D drawing
+  function parseComponent(s) {
+    const str = String(s).trim();
+    if (isComplexStr(str)) {
+      const jStr = str.replace(/[()]/g, '');
+      return parseFloat(jStr) || 0; // real part only
+    }
+    return evalFrac(str) || 0;
+  }
+
+  const v1full = parseVec(v1s).map(parseComponent);
+  const v2full = parseVec(v2s).map(parseComponent);
+
+  // Take only first 2 components for 2D display
+  const v1 = v1full.slice(0, 2);
+  const v2 = v2full.slice(0, 2);
+
+  if (v1.length < 2 || v2.length < 2) {
+    ctx.fillStyle='rgba(74,158,187,0.5)'; ctx.font='12px "JetBrains Mono"'; ctx.textAlign='center';
+    ctx.fillText('Enter 2D or 3D vectors to visualize', W/2, H/2); return;
+  }
+
+  let t=0;
+  function frame() {
+    t+=0.018;
+    ctx.clearRect(0,0,W,H);
+    drawDarkGrid(ctx,W,H,cx,cy,scale);
+
+    const pulse=(Math.sin(t*2)+1)/2;
+    const len1=Math.sqrt(v1[0]**2+v1[1]**2)||1;
+    const len2=Math.sqrt(v2[0]**2+v2[1]**2)||1;
+    const dot=v1[0]*v2[0]+v1[1]*v2[1];
+    const cosA=Math.max(-1,Math.min(1,dot/(len1*len2)));
+    const angleRad=Math.acos(cosA);
+    const angleDeg=(angleRad*180/Math.PI).toFixed(1);
+    const isOrtho=Math.abs(dot)<0.001;
+
+    // Vectors
+    drawGlowArrow(ctx,cx,cy,cx+v1[0]*scale,cy-v1[1]*scale,'#4a9ebb','v₁');
+    drawGlowArrow(ctx,cx,cy,cx+v2[0]*scale,cy-v2[1]*scale,'#7ec8e3','v₂');
+
+    // Angle arc
+    const a1=Math.atan2(-v1[1],v1[0]);
+    const a2=Math.atan2(-v2[1],v2[0]);
+    const arcR=30+pulse*5;
+    ctx.strokeStyle=isOrtho?`rgba(46,204,113,${0.5+pulse*0.3})`:`rgba(176,223,240,${0.4+pulse*0.2})`;
+    ctx.lineWidth=isOrtho?2:1.5;
+    ctx.setLineDash(isOrtho?[]:[3,3]);
+    ctx.beginPath(); ctx.arc(cx,cy,arcR,Math.min(a1,a2),Math.max(a1,a2)); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Right angle symbol if orthogonal
+    if (isOrtho) {
+      const sq=12;
+      const ua=[v1[0]/len1,v1[1]/len1];
+      const ub=[v2[0]/len2,v2[1]/len2];
+      ctx.strokeStyle=`rgba(46,204,113,${0.6+pulse*0.3})`;
+      ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx+ua[0]*sq,cy-ua[1]*sq);
+      ctx.lineTo(cx+ua[0]*sq+ub[0]*sq,cy-ua[1]*sq-ub[1]*sq);
+      ctx.lineTo(cx+ub[0]*sq,cy-ub[1]*sq);
+      ctx.stroke();
+    }
+
+    // Angle label
+    const midA=(a1+a2)/2;
+    const lx=cx+Math.cos(midA)*(arcR+20);
+    const ly=cy+Math.sin(midA)*(arcR+20);
+    ctx.font=`500 12px "JetBrains Mono"`;
+    ctx.fillStyle=isOrtho?'#2ecc71':'#b0dff0';
+    ctx.textAlign='center';
+    ctx.fillText(isOrtho?'90° — orthogonal!':angleDeg+'°',lx,ly);
+
+    animId=requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+/* ── LT Grid transform ── */
+function drawTransformAnim(ctx, W, H, matrix) {
+  let t=0;
+  const cx=W/2, cy=H/2, scale=40;
+
+  function frame() {
+    t+=0.008;
+    ctx.clearRect(0,0,W,H);
+    const prog=(Math.sin(t)+1)/2;
+    drawDarkGrid(ctx,W,H,cx,cy,scale,prog,matrix);
+
+    // Draw transformed basis vectors
+    const colors=['#4a9ebb','#7ec8e3','#b0dff0','#2ecc71'];
+    const n=Math.min((matrix[0]||[]).length,4);
+
+    // Original basis (faded)
+    for(let c=0;c<Math.min(n,2);c++) {
+      const ex=c===0?1:0, ey=c===0?0:1;
+      drawGlowArrow(ctx,cx,cy,cx+ex*scale*(1-prog)+evalFrac((matrix[0]||[])[c]||0)*scale*prog,
+        cy-(ey*scale*(1-prog)-evalFrac((matrix[1]||[])[c]||0)*scale*prog),
+        colors[c],`T(e${c+1})`,0.9);
+    }
+    animId=requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+/* ── Shared 2D helpers ── */
+function drawDarkGrid(ctx,W,H,cx,cy,scale,prog,matrix) {
+  const s=scale;
+  const sx=Math.floor(-cx/s)-1, ex=Math.ceil((W-cx)/s)+1;
+  const sy=Math.floor(-cy/s)-1, ey=Math.ceil((H-cy)/s)+1;
+
+  for(let i=sx;i<=ex;i++) {
+    for(let j=sy;j<=ey;j++) {
+      let x0=cx+i*s, y0=cy+j*s;
+      let x1=cx+(i+1)*s, y1=cy+j*s;
+      let x2=cx+i*s, y2=cy+(j+1)*s;
+
+      if(prog!==undefined && matrix) {
+        // Transform grid lines
+        const t=(p,q)=>({
+          x:cx+(p*( (1-prog)+prog*(matrix[0]?.[0]||1) )+q*prog*(matrix[0]?.[1]||0))*s,
+          y:cy-(p*prog*(matrix[1]?.[0]||0)+q*( (1-prog)+prog*(matrix[1]?.[1]||1) ))*s
+        });
+        const p00=t(i,j), p10=t(i+1,j), p01=t(i,j+1);
+        ctx.strokeStyle='rgba(74,158,187,0.07)'; ctx.lineWidth=0.5;
+        ctx.beginPath(); ctx.moveTo(p00.x,p00.y); ctx.lineTo(p10.x,p10.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p00.x,p00.y); ctx.lineTo(p01.x,p01.y); ctx.stroke();
+      } else {
+        ctx.strokeStyle='rgba(74,158,187,0.07)'; ctx.lineWidth=0.5;
+        ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x2,y2); ctx.stroke();
+      }
+    }
+  }
+
+  // Axes
+  ctx.strokeStyle='rgba(74,158,187,0.3)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,H); ctx.stroke();
+
+  // Tick labels
+  ctx.fillStyle='rgba(74,158,187,0.4)'; ctx.font='10px "JetBrains Mono"'; ctx.textAlign='center';
+  for(let i=sx;i<=ex;i++){if(i===0)continue;ctx.fillText(i,cx+i*s,cy+14);}
+  ctx.textAlign='right';
+  for(let j=sy;j<=ey;j++){if(j===0)continue;ctx.fillText(-j,cx-6,cy+j*s+4);}
+}
+
+function drawGlowArrow(ctx,x1,y1,x2,y2,color,label,alpha=1) {
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);
+  if(len<2) return;
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.shadowColor=color; ctx.shadowBlur=8;
+  ctx.strokeStyle=color; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const a=Math.atan2(dy,dx),hs=8;
+  ctx.fillStyle=color;
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-hs*Math.cos(a-0.4),y2-hs*Math.sin(a-0.4));
+  ctx.lineTo(x2-hs*Math.cos(a+0.4),y2-hs*Math.sin(a+0.4));
+  ctx.closePath(); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.font='500 11px "JetBrains Mono"'; ctx.fillStyle=color; ctx.textAlign='left';
+  ctx.fillText(label,x2+8,y2-4);
+  ctx.restore();
+}
+
+/* ── 3D visualization with Three.js ── */
+function render3D(data) {
+  const wrap = document.getElementById('viz-3d-wrap');
+  const W=wrap.offsetWidth, H=wrap.offsetHeight;
+
+  const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setSize(W,H);
+  renderer.setClearColor(0x060e1a,1);
+  wrap.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60,W/H,0.1,1000);
+  camera.position.set(4,3,5);
+  camera.lookAt(0,0,0);
+
+  // Grid
+  const gridHelper = new THREE.GridHelper(10,10,0x1a4a5a,0x0d2a35);
+  scene.add(gridHelper);
+
+  // Axes
+  const axes = new THREE.AxesHelper(3);
+  scene.add(axes);
+
+  // Axis labels via sprites
+  function makeLabel(text,pos,color) {
+    const canvas=document.createElement('canvas'); canvas.width=64; canvas.height=32;
+    const c=canvas.getContext('2d');
+    c.fillStyle=color; c.font='bold 20px monospace'; c.textAlign='center';
+    c.fillText(text,32,22);
+    const tex=new THREE.CanvasTexture(canvas);
+    const mat=new THREE.SpriteMaterial({map:tex,transparent:true});
+    const sprite=new THREE.Sprite(mat);
+    sprite.position.set(...pos); sprite.scale.set(0.5,0.25,1);
+    scene.add(sprite);
+  }
+  makeLabel('x',[3.3,0,0],'#e74c3c');
+  makeLabel('y',[0,3.3,0],'#2ecc71');
+  makeLabel('z',[0,0,3.3],'#4a9ebb');
+
+  const colors3 = [0x4a9ebb,0x7ec8e3,0x2ecc71,0xe74c3c];
+  const origin = new THREE.Vector3(0,0,0);
+
+  // diag 3D: eigenvector visualization
+  if (currentOp === 'diag') {
+    drawEigenViz3D(scene, data);
+    document.getElementById('viz-label').textContent = '3D eigenvectors — spans stretch by λ · drag to rotate';
+  } else if (currentOp === 'num-inner') {
+    const v1 = parseVec(document.getElementById('v-v1')?.value || '');
+    const v2 = parseVec(document.getElementById('v-v2')?.value || '');
+    if (v1.length >= 3 && v2.length >= 3) {
+      const vec1 = new THREE.Vector3(v1[0],v1[1],v1[2]);
+      const vec2 = new THREE.Vector3(v2[0],v2[1],v2[2]);
+
+      // Draw v1
+      const len1 = vec1.length();
+      if (len1 > 0.01) {
+        const arrow1 = new THREE.ArrowHelper(vec1.clone().normalize(), origin, len1, 0x4a9ebb, 0.2, 0.12);
+        scene.add(arrow1);
+      }
+      // Draw v2
+      const len2 = vec2.length();
+      if (len2 > 0.01) {
+        const arrow2 = new THREE.ArrowHelper(vec2.clone().normalize(), origin, len2, 0x7ec8e3, 0.2, 0.12);
+        scene.add(arrow2);
+      }
+
+      // Angle arc between vectors
+      const cosA = vec1.dot(vec2) / (len1 * len2 + 1e-10);
+      const angleRad = Math.acos(Math.max(-1, Math.min(1, cosA)));
+      const angleDeg = (angleRad * 180 / Math.PI).toFixed(1);
+
+      // Draw arc using line segments
+      const arcPoints = [];
+      const n1 = vec1.clone().normalize();
+      const n2 = vec2.clone().normalize();
+      const arcR = Math.min(len1, len2) * 0.4;
+      const steps = 32;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const p = n1.clone().lerp(n2, t).normalize().multiplyScalar(arcR);
+        arcPoints.push(p);
+      }
+      const arcGeo = new THREE.BufferGeometry().setFromPoints(arcPoints);
+      const arcMat = new THREE.LineBasicMaterial({color: 0xb0dff0, opacity: 0.7, transparent: true});
+      scene.add(new THREE.Line(arcGeo, arcMat));
+
+      // Angle label sprite
+      const midDir = n1.clone().lerp(n2, 0.5).normalize().multiplyScalar(arcR + 0.3);
+      const labelCanvas = document.createElement('canvas');
+      labelCanvas.width = 128; labelCanvas.height = 40;
+      const lc = labelCanvas.getContext('2d');
+      lc.fillStyle = '#b0dff0'; lc.font = 'bold 18px monospace'; lc.textAlign = 'center';
+      lc.fillText(angleDeg + '°', 64, 28);
+      const labelTex = new THREE.CanvasTexture(labelCanvas);
+      const labelMat = new THREE.SpriteMaterial({map: labelTex, transparent: true});
+      const labelSprite = new THREE.Sprite(labelMat);
+      labelSprite.position.copy(midDir);
+      labelSprite.scale.set(0.8, 0.25, 1);
+      scene.add(labelSprite);
+
+      document.getElementById('viz-label').textContent = `3D — angle: ${angleDeg}° · ⟨v₁,v₂⟩ = ${fmt(data.result)}`;
+    }
+  } else {
+    // Matrix result: draw column vectors
+    const matrix = data.result || data.J || [];
+    const n = Math.min((matrix[0]||[]).length, 4);
+    for (let c=0; c<n; c++) {
+      const tx=(matrix[0]||[])[c]||0;
+      const ty=(matrix[1]||[])[c]||0;
+      const tz=(matrix[2]||[])[c]||0;
+      const dir=new THREE.Vector3(tx,ty,tz);
+      const len=dir.length();
+      if (len<0.01) continue;
+      const arrow=new THREE.ArrowHelper(dir.normalize(),origin,len,colors3[c],0.2,0.12);
+      scene.add(arrow);
+    }
+  }
+
+  // Lighting
+  scene.add(new THREE.AmbientLight(0x1a3a4a,2));
+  const dLight=new THREE.DirectionalLight(0x7ec8e3,1);
+  dLight.position.set(5,8,5); scene.add(dLight);
+
+  // Orbit-like rotation
+  let rotY=0,rotX=0.3;
+  let isDrag=false,lastMX=0,lastMY=0;
+  renderer.domElement.addEventListener('mousedown',e=>{isDrag=true;lastMX=e.clientX;lastMY=e.clientY;});
+  renderer.domElement.addEventListener('mousemove',e=>{
+    if(!isDrag) return;
+    rotY+=(e.clientX-lastMX)*0.008;
+    rotX+=(e.clientY-lastMY)*0.008;
+    lastMX=e.clientX;lastMY=e.clientY;
+  });
+  renderer.domElement.addEventListener('mouseup',()=>isDrag=false);
+
+  function animate3d() {
+    animId=requestAnimationFrame(animate3d);
+    if(!isDrag) rotY+=0.004;
+    camera.position.x=6*Math.sin(rotY)*Math.cos(rotX);
+    camera.position.y=6*Math.sin(rotX)+1;
+    camera.position.z=6*Math.cos(rotY)*Math.cos(rotX);
+    camera.lookAt(0,0,0);
+    renderer.render(scene,camera);
+  }
+  animate3d();
+}
+
+/* ── Gram-Schmidt visualization ── */
+function drawGramSchmidtViz(ctx, W, H, data) {
+  if (!data.result || !data.result.length) return;
+
+  const cx = W/2, cy = H/2, scale = 60;
+  const orthVecs = data.result.map(v => {
+    const flat = Array.isArray(v[0]) ? v.flat() : v;
+    return flat.map(x => parseFloat(x) || 0);
+  });
+
+  // Read original input vectors
+  const origVecs = numVecs.map((_,i) => {
+    const el = document.getElementById(`v-vec-${i}`);
+    return el ? parseVec(el.value) : [];
+  }).filter(v => v.length >= 2);
+
+  const colors     = ['#4a9ebb','#7ec8e3','#2ecc71','#e74c3c'];
+  const origColors = ['rgba(74,158,187,0.3)','rgba(126,200,227,0.3)','rgba(46,204,113,0.3)','rgba(231,76,60,0.3)'];
+
+  let t = 0;
+  function frame() {
+    t += 0.01;
+    ctx.clearRect(0, 0, W, H);
+    drawDarkGrid(ctx, W, H, cx, cy, scale);
+
+    const prog = (Math.sin(t - Math.PI/2) + 1) / 2; // 0→1→0
+
+    orthVecs.forEach((ov, i) => {
+      const ox = ov[0] || 0, oy = ov[1] || 0;
+      const origV = origVecs[i] || [ox, oy];
+      const origx = origV[0] || 0, origy = origV[1] || 0;
+
+      // Draw original vector faded
+      ctx.save();
+      ctx.globalAlpha = 0.25;
+      ctx.strokeStyle = colors[i % colors.length];
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4,3]);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + origx * scale, cy - origy * scale);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // Animated interpolation: original → orthonormal
+      const curX = origx + prog * (ox - origx);
+      const curY = origy + prog * (oy - origy);
+
+      drawGlowArrow(ctx, cx, cy, cx + curX * scale, cy - curY * scale, colors[i % colors.length], `u${i+1}`);
+
+      // Projection line from original to orthonormal (visible at midpoint of animation)
+      if (prog > 0.1 && prog < 0.9 && i > 0) {
+        const alpha = Math.sin(prog * Math.PI) * 0.5;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = colors[i % colors.length];
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2,3]);
+        ctx.beginPath();
+        ctx.moveTo(cx + origx * scale, cy - origy * scale);
+        ctx.lineTo(cx + ox * scale, cy - oy * scale);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+    });
+
+    // Right angle markers between orthonormal vectors (when prog > 0.85)
+    if (prog > 0.85 && orthVecs.length >= 2) {
+      for (let i = 0; i < Math.min(orthVecs.length - 1, 3); i++) {
+        for (let j = i + 1; j < Math.min(orthVecs.length, 4); j++) {
+          const u1 = orthVecs[i], u2 = orthVecs[j];
+          const dot = (u1[0]||0)*(u2[0]||0) + (u1[1]||0)*(u2[1]||0);
+          if (Math.abs(dot) < 0.01) {
+            const sq = 10;
+            const n1 = [u1[0]||0, u1[1]||0];
+            const n2 = [u2[0]||0, u2[1]||0];
+            const alpha = (prog - 0.85) / 0.15;
+            ctx.save();
+            ctx.globalAlpha = alpha * 0.8;
+            ctx.strokeStyle = '#2ecc71';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(cx + n1[0]*sq, cy - n1[1]*sq);
+            ctx.lineTo(cx + n1[0]*sq + n2[0]*sq, cy - n1[1]*sq - n2[1]*sq);
+            ctx.lineTo(cx + n2[0]*sq, cy - n2[1]*sq);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      }
+    }
+
+    // Label: norm check
+    const normLabel = prog > 0.8
+      ? `orthonormal — |uᵢ|=1, uᵢ·uⱼ=0`
+      : `orthogonalizing...`;
+    ctx.font = '500 11px "JetBrains Mono"';
+    ctx.fillStyle = prog > 0.8 ? '#2ecc71' : 'rgba(74,158,187,0.6)';
+    ctx.textAlign = 'left';
+    ctx.fillText(normLabel, 14, H - 16);
+
+    animId = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+/* ── Eigenvector visualization 2D ── */
+function drawEigenViz2D(ctx, W, H, data) {
+  if (!data.P || !data.D) return;
+  const cx = W/2, cy = H/2, scale = 52;
+  const nCols = data.P[0].length;
+  const eigenvecs = [];
+  const eigenvals = []; // {re, im, isComplex}
+
+  for (let c = 0; c < Math.min(nCols, 4); c++) {
+    const dRaw = String(data.D[c]?.[c] ?? '0');
+    let re = 0, im = 0, isComplex = false;
+    if (isComplexStr(dRaw)) {
+      const jStr = dRaw.replace(/[()]/g, '');
+      re = parseFloat(jStr) || 0;
+      const imMatch = jStr.match(/([+-]?[\d.eE]+)j/);
+      im = imMatch ? parseFloat(imMatch[1]) : 0;
+      isComplex = Math.abs(im) > 1e-10;
+    } else {
+      re = evalFrac(dRaw) || 0;
+    }
+    eigenvals.push({ re, im, isComplex });
+    const vec = data.P.map(row => {
+      const vRaw = String(row[c] ?? '0');
+      if (isComplexStr(vRaw)) return parseFloat(vRaw.replace(/[()]/g,'')) || 0;
+      return evalFrac(vRaw) || 0;
+    });
+    eigenvecs.push(vec);
+  }
+
+  const eigColors = ['#4a9ebb','#7ec8e3','#2ecc71','#e74c3c'];
+  const spanScalars = [-2,-1.5,-1,-0.5,0.5,1,1.5,2];
+  let t = 0;
+
+  function frame() {
+    t += 0.012;
+    ctx.clearRect(0, 0, W, H);
+    drawDarkGrid(ctx, W, H, cx, cy, scale);
+    const prog = (Math.sin(t - Math.PI/2) + 1) / 2;
+
+    eigenvecs.forEach((ev, i) => {
+      const lv = eigenvals[i];
+      const col = eigColors[i % eigColors.length];
+      const ex = ev[0] || 0, ey = ev[1] || 0;
+      const len = Math.sqrt(ex*ex + ey*ey) || 1;
+      const nx = ex/len, ny = ey/len;
+
+      if (lv.isComplex) {
+        // complex eigenvalue → steady circular orbit
+        const r = Math.sqrt(lv.re*lv.re + lv.im*lv.im);
+        const theta = Math.atan2(lv.im, lv.re);
+        const orbitR = Math.min(r, 2.5) * scale * 0.5 + 30; // fixed visible radius
+        const angle = t * Math.abs(theta) * 1.2 * (lv.im >= 0 ? 1 : -1); // direction from sign of im
+
+        // faint orbit circle
+        ctx.save();
+        ctx.globalAlpha = 0.2;
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4,4]);
+        ctx.beginPath();
+        ctx.arc(cx, cy, orbitR, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        // rotating arrow — draw from behind to tip so it has length
+        const tipX = cx + orbitR * Math.cos(angle);
+        const tipY = cy - orbitR * Math.sin(angle);
+        const tailAngle = angle - 0.4;
+        const tailX = cx + orbitR * Math.cos(tailAngle);
+        const tailY = cy - orbitR * Math.sin(tailAngle);
+
+        ctx.save();
+        ctx.strokeStyle = col; ctx.fillStyle = col;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = col; ctx.shadowBlur = 10;
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath(); ctx.moveTo(tailX, tailY); ctx.lineTo(tipX, tipY); ctx.stroke();
+        // arrowhead
+        const dx = tipX - tailX, dy = tipY - tailY;
+        const ang = Math.atan2(dy, dx);
+        ctx.beginPath();
+        ctx.moveTo(tipX, tipY);
+        ctx.lineTo(tipX - 10*Math.cos(ang-0.4), tipY - 10*Math.sin(ang-0.4));
+        ctx.lineTo(tipX - 10*Math.cos(ang+0.4), tipY - 10*Math.sin(ang+0.4));
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+
+        // label stacked top-left
+        const sign = lv.im >= 0 ? '+' : '';
+        const lamStr = `λ${i+1} = ${fmt(lv.re)}${sign}${fmt(lv.im)}i  |λ|=${parseFloat(r.toFixed(3))}`;
+        ctx.save();
+        ctx.font = 'bold 12px "JetBrains Mono"';
+        const tw = ctx.measureText(lamStr).width;
+        ctx.fillStyle = 'rgba(6,14,26,0.85)';
+        ctx.beginPath(); ctx.roundRect(12, 12 + i*22, tw+12, 18, 4); ctx.fill();
+        ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 8;
+        ctx.textAlign = 'left';
+        ctx.fillText(lamStr, 18, 26 + i*22);
+        ctx.restore();
+      } else {
+        // real eigenvalue → stretch animation
+        const lam = lv.re;
+        ctx.save(); ctx.globalAlpha = 0.2; ctx.strokeStyle = col;
+        ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+        ctx.beginPath();
+        ctx.moveTo(cx - nx*W, cy + ny*W); ctx.lineTo(cx + nx*W, cy - ny*W);
+        ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+
+        spanScalars.forEach(s => {
+          const ox = cx + s*ex*scale, oy = cy - s*ey*scale;
+          const sx2 = cx + s*lam*ex*scale, sy2 = cy - s*lam*ey*scale;
+          const curX = ox + prog*(sx2-ox), curY = oy + prog*(sy2-oy);
+          if (Math.abs(s) < 0.01) return;
+          ctx.save(); ctx.globalAlpha = 0.55;
+          ctx.shadowColor = col; ctx.shadowBlur = 4;
+          ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(curX,curY); ctx.stroke();
+          ctx.beginPath(); ctx.arc(curX,curY,3,0,Math.PI*2); ctx.fill();
+          ctx.restore();
+        });
+
+        const stretchedX = cx + lam*ex*scale*prog + ex*scale*(1-prog);
+        const stretchedY = cy - lam*ey*scale*prog - ey*scale*(1-prog);
+        drawGlowArrow(ctx, cx, cy, stretchedX, stretchedY, col, `v${i+1}`);
+
+        // bold label near tip
+        const lx = stretchedX + (stretchedX > cx ? 14 : -14);
+        const ly = stretchedY + (stretchedY > cy ? 18 : -8);
+        const ls = `λ${i+1} = ${fmt(lam)}`;
+        ctx.save(); ctx.font = 'bold 13px "JetBrains Mono"';
+        const tw = ctx.measureText(ls).width;
+        ctx.fillStyle = 'rgba(6,14,26,0.85)';
+        ctx.beginPath(); ctx.roundRect(lx-6, ly-13, tw+12, 18, 4); ctx.fill();
+        ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 8;
+        ctx.textAlign = 'left'; ctx.fillText(ls, lx, ly); ctx.restore();
+      }
+    });
+
+    const hasComplex = eigenvals.some(lv => lv.isComplex);
+    ctx.font = 'bold 12px "JetBrains Mono"';
+    ctx.fillStyle = 'rgba(126,200,227,0.9)';
+    ctx.textAlign = 'left';
+    ctx.fillText(hasComplex ? 'complex λ → rotation + scaling (spiral)' : `stretch factor: ${(1 + prog*(Math.abs(eigenvals[0]?.re||1)-1)).toFixed(2)}×`, 14, H - 16);
+
+    animId = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+/* ── Eigenvector visualization 3D ── */
+function drawEigenViz3D(scene, data) {
+  if (!data.P || !data.D) return;
+
+  const nCols = data.P[0].length;
+  const eigColors3 = [0x4a9ebb, 0x7ec8e3, 0x2ecc71, 0xe74c3c];
+  const origin = new THREE.Vector3(0,0,0);
+
+  for (let c = 0; c < Math.min(nCols, 4); c++) {
+    // parse eigenvector column — use real parts for 3D drawing
+    const ev = data.P.map(row => {
+      const vRaw = String(row[c] ?? '0');
+      if (isComplexStr(vRaw)) return parseFloat(vRaw.replace(/[()]/g,'')) || 0;
+      return evalFrac(vRaw) || 0;
+    });
+    // parse eigenvalue — use real part for stretch amount
+    const dRaw = String(data.D[c]?.[c] ?? '0');
+    let lam = 0;
+    if (isComplexStr(dRaw)) {
+      lam = parseFloat(dRaw.replace(/[()]/g,'')) || 0;
+    } else {
+      lam = evalFrac(dRaw) || 0;
+    }
+
+    const col = eigColors3[c % eigColors3.length];
+    const ex = ev[0]||0, ey = ev[1]||0, ez = ev[2]||0;
+    const len = Math.sqrt(ex*ex+ey*ey+ez*ez)||1;
+    // normalized direction
+    const nx = ex/len, ny = ey/len, nz = ez/len;
+
+    // Eigenspace LINE — goes through origin along eigenvector direction
+    const linePoints = [];
+    for (let s = -2.5; s <= 2.5; s += 0.25) {
+      linePoints.push(new THREE.Vector3(s*nx, s*ny, s*nz));
+    }
+    const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
+    const lineMat = new THREE.LineBasicMaterial({color:col, opacity:0.25, transparent:true});
+    scene.add(new THREE.Line(lineGeo, lineMat));
+
+    // Main eigenvector arrow — along eigenvector direction, scaled by eigenvalue
+    const arrowLen = Math.max(Math.abs(lam) * 0.5, 0.5);
+    const dir = new THREE.Vector3(nx, ny, nz);
+    if (dir.length() > 0.01) {
+      const arrow = new THREE.ArrowHelper(dir, origin, arrowLen, col, 0.2, 0.12);
+      scene.add(arrow);
+    }
+
+    // Sample dots along the eigenvector span (not axis-aligned)
+    [-2, -1, 1, 2].forEach(s => {
+      const tip = new THREE.Vector3(s*nx*lam, s*ny*lam, s*nz*lam);
+      if (tip.length() < 0.05) return;
+      const dotGeo = new THREE.SphereGeometry(0.06, 8, 8);
+      const dotMat = new THREE.MeshBasicMaterial({color:col, opacity:0.5, transparent:true});
+      const dot = new THREE.Mesh(dotGeo, dotMat);
+      dot.position.copy(tip);
+      scene.add(dot);
+      const sLineGeo = new THREE.BufferGeometry().setFromPoints([origin, tip]);
+      const sLineMat = new THREE.LineBasicMaterial({color:col, opacity:0.3, transparent:true});
+      scene.add(new THREE.Line(sLineGeo, sLineMat));
+    });
+
+    // Lambda label sprite
+    const lc2 = document.createElement('canvas'); lc2.width=180; lc2.height=40;
+    const lctx = lc2.getContext('2d');
+    lctx.fillStyle = '#'+col.toString(16).padStart(6,'0');
+    lctx.font = 'bold 15px monospace'; lctx.textAlign='center';
+    lctx.fillText(`v${c+1}  λ=${parseFloat(lam.toFixed(3))}`, 90, 28);
+    const lTex = new THREE.CanvasTexture(lc2);
+    const lSprite = new THREE.Sprite(new THREE.SpriteMaterial({map:lTex, transparent:true}));
+    lSprite.position.set(nx*arrowLen*1.3+0.1, ny*arrowLen*1.3+0.1, nz*arrowLen*1.3);
+    lSprite.scale.set(1.2, 0.3, 1);
+    scene.add(lSprite);
+  }
+}
+
+/* ─────────────────────────────────────────
+   UTILS
+───────────────────────────────────────── */
+async function api(endpoint,body) {
+  const res=await fetch(API+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  setStatus(true);
+  return res.json();
+}
+
+function evalFrac(v) {
+  if (typeof v === 'number') return v;
+  if (typeof v === 'string') {
+    const parts = v.split('/');
+    if (parts.length === 2) return parseFloat(parts[0]) / parseFloat(parts[1]);
+    return parseFloat(v);
+  }
+  return 0;
+}
+
+function isComplexStr(v) {
+  // detects strings like "(2+3j)", "3j", "(1-2j)" returned by Python
+  return typeof v === 'string' && (v.includes('j') || v.includes('I'));
+}
+
+function fmtComplex(v) {
+  // parse Python complex string like "(2+3j)", "3j", "0j", "(1-2j)" → display as a+bi
+  // strip zero parts: "2+0j" → "2", "0+3j" → "3i", "0j" → "0"
+  const s = v.replace(/[()]/g, '').trim();
+  // match: optional real part + optional imaginary part ending in j
+  const m = s.match(/^([+-]?[\d.eE]+)?([+-][\d.eE]+j|[+-]?[\d.eE]+j)$/);
+  let re = 0, im = 0;
+  if (m) {
+    if (m[1] && m[2]) {
+      re = parseFloat(m[1]);
+      im = parseFloat(m[2]); // ends in j, parseFloat stops before j
+    } else if (m[2]) {
+      re = 0;
+      im = parseFloat(m[2]);
+    } else if (m[1]) {
+      re = parseFloat(m[1]);
+      im = 0;
+    }
+  } else {
+    // fallback: just replace j→i
+    return s.replace('j', 'i');
+  }
+  const rFmt = v => Math.abs(v) < 1e-9 ? 0 : parseFloat(v.toFixed(6));
+  re = rFmt(re); im = rFmt(im);
+  if (re === 0 && im === 0) return '0';
+  if (im === 0) return String(re);
+  if (re === 0) return `${im}i`;
+  return `${re}${im >= 0 ? '+' : ''}${im}i`;
+}
+
+function fmt(v){
+  if (isComplexStr(v)) return fmtComplex(v);         // complex from backend → show as a+bi
+  if (typeof v === 'string' && v.includes('/')) return v; // fraction → show as-is
+  const n = evalFrac(v);
+  if(isNaN(n)) return String(v);
+  if(Math.abs(n)<1e-10) return '0';
+  return parseFloat(n.toFixed(4)).toString();
+}
+
+function setLoading(on){
+  document.getElementById('spinner').style.display=on?'block':'none';
+  document.getElementById('calc-lbl').textContent=on?'Calculating...':'Calculate';
+  document.getElementById('calc-btn').disabled=on;
+}
+
+function resetResult(){
+  document.getElementById('result-area').innerHTML=`<div class="result-empty">
+    <div class="result-empty-icon">⬡</div>
+    <div class="result-empty-txt">awaiting calculation</div>
+  </div>`;
+}
+
+function setStatus(ok){
+  document.getElementById('status-dot').style.background=ok?'#2ecc71':'#e74c3c';
+  document.getElementById('status-txt').textContent=ok?'connected':'offline';
+}
+
+const hist=[];
+function addHistory(op,data){
+  const preview=data.result&&Array.isArray(data.result)
+    ?`[[${(data.result[0]||[]).map(v=>fmt(v)).join(', ')}]…]`
+    :data.message||(typeof data.result==='string'?data.result:'')||'—';
+  hist.unshift({op:op.replace(/-/g,' '),preview});
+  if(hist.length>8) hist.pop();
+  document.getElementById('history-list').innerHTML=hist.map(h=>
+    `<div class="history-row"><span class="h-op">${h.op}</span><span class="h-txt">${h.preview}</span></div>`
+  ).join('');
+}
+
+/* ── Jordan form: chain reaction flow visualization ── */
+function drawJordanViz(ctx, W, H, data) {
+  if (!data.J) return;
+  const nRows = data.J.length;
+  const cx = W / 2, cy = H / 2;
+  let t = 0;
+
+  // parse Jordan blocks — find eigenvalues and block sizes from diagonal
+  const blocks = [];
+  let i = 0;
+  while (i < nRows) {
+    const lam = evalFrac(data.J[i][i]) || 0;
+    let size = 1;
+    // check if next row has a 1 in superdiagonal (jordan block continuation)
+    while (i + size < nRows && Math.abs(evalFrac(data.J[i + size - 1][i + size]) || 0) > 0.5) size++;
+    blocks.push({ lam, size, start: i });
+    i += size;
+  }
+
+  const colors = ['#4a9ebb', '#7ec8e3', '#2ecc71', '#e74c3c', '#b0dff0'];
+  const boxW = Math.min(80, (W - 80) / Math.max(nRows, 1));
+  const boxH = 44;
+  const totalW = nRows * boxW + (nRows - 1) * 8;
+  const startX = cx - totalW / 2;
+
+  function frame() {
+    t += 0.018;
+    ctx.clearRect(0, 0, W, H);
+
+    // faint background grid
+    ctx.strokeStyle = 'rgba(74,158,187,0.05)';
+    ctx.lineWidth = 1;
+    for (let g = 0; g < W; g += 40) { ctx.beginPath(); ctx.moveTo(g, 0); ctx.lineTo(g, H); ctx.stroke(); }
+    for (let g = 0; g < H; g += 40) { ctx.beginPath(); ctx.moveTo(0, g); ctx.lineTo(W, g); ctx.stroke(); }
+
+    let col = 0;
+    blocks.forEach((blk, bi) => {
+      const color = colors[bi % colors.length];
+
+      for (let s = 0; s < blk.size; s++) {
+        const bx = startX + (col + s) * (boxW + 8);
+        const by = cy - boxH / 2;
+
+        // pulse effect for each box in the block — staggered by s
+        const pulse = (Math.sin(t * 2 - s * 0.8) + 1) / 2;
+
+        // box background
+        ctx.save();
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 8 + pulse * 12;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.fillStyle = `rgba(${color === '#4a9ebb' ? '74,158,187' : color === '#7ec8e3' ? '126,200,227' : color === '#2ecc71' ? '46,204,113' : '231,76,60'},${0.08 + pulse * 0.1})`;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, boxW - 4, boxH, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        // eigenvalue label
+        ctx.font = 'bold 13px "JetBrains Mono"';
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.fillText(`λ=${fmt(blk.lam)}`, bx + (boxW - 4) / 2, by + 18);
+
+        // dimension index
+        ctx.font = '10px "JetBrains Mono"';
+        ctx.fillStyle = 'rgba(74,158,187,0.5)';
+        ctx.fillText(`e${col + s + 1}`, bx + (boxW - 4) / 2, by + 34);
+
+        // arrow between boxes in same block (the "feeds into" chain)
+        if (s < blk.size - 1) {
+          const arrowPulse = (Math.sin(t * 2 - s * 0.8 + 1) + 1) / 2;
+          const ax = bx + boxW - 4;
+          const ay = cy;
+          ctx.save();
+          ctx.globalAlpha = 0.4 + arrowPulse * 0.5;
+          ctx.strokeStyle = color;
+          ctx.fillStyle = color;
+          ctx.lineWidth = 2;
+          ctx.shadowColor = color;
+          ctx.shadowBlur = 6;
+          // line
+          ctx.beginPath();
+          ctx.moveTo(ax + 2, ay);
+          ctx.lineTo(ax + 6, ay);
+          ctx.stroke();
+          // arrowhead
+          ctx.beginPath();
+          ctx.moveTo(ax + 10, ay);
+          ctx.lineTo(ax + 6, ay - 4);
+          ctx.lineTo(ax + 6, ay + 4);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // block label below
+      const blockCenterX = startX + (col + blk.size / 2 - 0.5) * (boxW + 8) + (boxW - 4) / 2;
+      ctx.font = '10px "JetBrains Mono"';
+      ctx.fillStyle = `${color}99`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`block ${bi + 1}  (${blk.size}×${blk.size})`, blockCenterX, cy + boxH / 2 + 20);
+
+      col += blk.size;
+    });
+
+    // top label
+    ctx.font = '500 11px "JetBrains Mono"';
+    ctx.fillStyle = 'rgba(74,158,187,0.6)';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${blocks.length} jordan block${blocks.length !== 1 ? 's' : ''}  —  arrows show chained directions`, 14, H - 16);
+
+    animId = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+// Init: check backend
+fetch(API+'/docs').then(()=>setStatus(true)).catch(()=>{
+  document.getElementById('status-dot').style.background='#e74c3c';
+  document.getElementById('status-txt').textContent='offline';
+});
+</script>
+</body>
+</html>
