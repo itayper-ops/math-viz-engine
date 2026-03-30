@@ -1,4 +1,7 @@
 # math-viz-engine
+![App Preview](screenshots/main-screen.png)
+
+
 
 Linear algebra calculator with visualizations — supports matrices, vectors, polynomials, and linear transformations.
 Built with a Python/FastAPI backend, vanilla JavaScript frontend, and GPT-4 for natural language input.
@@ -70,7 +73,19 @@ Then open the frontend in your browser (or run it using a local server depending
 
 ## Project Structure
 
-*(Add your folder structure here later)*
+## Project Structure
+
+```text
+math-viz-engine/
+├── backend/              # FastAPI backend and mathematical logic
+├── frontend/             # Frontend interface
+├── screenshots/          # README images and demo screenshots
+├── terminal-version/     # Terminal-based version of the project
+├── app.py                # Main app entry point
+├── test_backend.py       # Backend testing file
+├── README.md
+├── LICENSE
+└── .gitignore
 
 ---
 
@@ -109,16 +124,18 @@ The engine will:
 ## Screenshots
 
 ### Polynomial Inner Product
-
-*(Add image here)*
+![Polynomial Inner Product](screenshots/Poly-ip)
 
 ### Vector Inner Product + Visualization
 
-*(Add image here)*
+![Vector Inner Product](screenshots/NVIP)
 
 ### 3x3 Matrix Diagonalization + Visualization
 
-*(Add image here)*
+![Matrix Diagonalization](screenshots/diag)
+
+### Jordan Form
+![Jordan Form,Minimun Polynomial and Characteristic Polynomial](screenshots/JF)
 
 ---
 
