@@ -124,18 +124,18 @@ The engine will:
 ## Screenshots
 
 ### Polynomial Inner Product
-![Polynomial Inner Product](screenshots/Poly-ip)
+![Polynomial Inner Product](screenshots/Poly-ip.png)
 
 ### Vector Inner Product + Visualization
 
-![Vector Inner Product](screenshots/NVIP)
+![Vector Inner Product](screenshots/NVIP.png)
 
 ### 3x3 Matrix Diagonalization + Visualization
 
-![Matrix Diagonalization](screenshots/diag)
+![Matrix Diagonalization](screenshots/diag.png)
 
 ### Jordan Form
-![Jordan Form,Minimun Polynomial and Characteristic Polynomial](screenshots/JF)
+![Jordan Form,Minimun Polynomial and Characteristic Polynomial](screenshots/JF.png)
 
 ---
 
