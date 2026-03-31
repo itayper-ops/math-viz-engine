@@ -82,7 +82,7 @@ math-vis-engine/
 ├── screenshots/          # README images and demo screenshots
 ├── terminal-version/     # Terminal-based version of the project
 ├── app.py                # Main app entry point
-├── test_backend.py       # Backend testing file
+├── test/                 # Tester files for terminal and backend entries
 ├── README.md
 ├── LICENSE
 └── .gitignore
